@@ -8,6 +8,8 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import Script from 'next/script';
 
 /* -------------------- Validation Schema -------------------- */
 const registrationSchema = z.object({
@@ -29,6 +31,12 @@ const registrationSchema = z.object({
     path: ["category"],
 });
 
+declare global {
+    interface Window {
+        Razorpay: any;
+    }
+}
+
 export function InlineRegistrationForm() {
     const {
         register,
@@ -40,6 +48,8 @@ export function InlineRegistrationForm() {
     } = useForm({
         resolver: zodResolver(registrationSchema),
     });
+
+    const [loading, setLoading] = useState(false);
 
     const selectedEvent = watch("eventName");
 
@@ -92,37 +102,101 @@ export function InlineRegistrationForm() {
         }
     };
 
-    async function saveRegistration(data: any) {
-        try {
-            const registrationData = {
-                ...data,
-                paymentStatus: 'pending',
-                createdAt: serverTimestamp(),
-            };
-
-            await addDoc(collection(db, "registrations"), registrationData);
-
-            reset();
-            toast.success("Registration Successful!", {
-                description: "We'll contact you for payment and event details via email."
-            });
-
-            return true;
-        } catch (error) {
-            console.error("Firestore Error:", error);
-            toast.error("Registration Failed", {
-                description: "Something went wrong. Please try again later."
-            });
-            return false;
+    const getEventPrice = (eventName: string) => {
+        switch (eventName) {
+            case "Avatar: The Algo War": return 99;
+            case "Neural Link": return 149;
+            case "The Voice of Eywa": return 59;
+            default: return 0;
         }
-    }
+    };
 
     async function onSubmit(data: any) {
-        await saveRegistration(data);
+        setLoading(true);
+        try {
+            const price = getEventPrice(data.eventName);
+
+            if (price === 0) {
+                toast.error("Invalid event details found");
+                setLoading(false);
+                return;
+            }
+
+            const response = await fetch('/api/razorpay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: price,
+                    currency: 'INR',
+                    receipt: `receipt_${Date.now()}`
+                })
+            });
+
+            const order = await response.json();
+
+            if (!response.ok) {
+                throw new Error(order.error || 'Failed to create order');
+            }
+
+            const options = {
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                amount: order.amount,
+                currency: order.currency,
+                name: "Code404 2k26",
+                description: `${data.eventName} Registration`,
+                order_id: order.id,
+                handler: async function (response: any) {
+                    try {
+                        await addDoc(collection(db, "registrations"), {
+                            ...data,
+                            amount: price,
+                            paymentId: response.razorpay_payment_id,
+                            orderId: response.razorpay_order_id,
+                            signature: response.razorpay_signature,
+                            paymentStatus: 'success',
+                            createdAt: serverTimestamp(),
+                        });
+
+                        reset();
+                        toast.success("Registration Successful!", {
+                            description: "Payment verified. See you at the event!"
+                        });
+
+                    } catch (error) {
+                        console.error("Firestore Error:", error);
+                        toast.error("Payment successful but registration failed", {
+                            description: "Please contact support."
+                        });
+                    }
+                },
+                prefill: {
+                    name: data.name,
+                    email: data.email,
+                    contact: data.phone
+                },
+                theme: { color: "#00E5FF" }
+            };
+
+            if (!window.Razorpay) throw new Error("Razorpay SDK not loaded");
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (response: any) {
+                toast.error("Payment Failed", { description: response.error.description });
+            });
+            rzp.open();
+
+        } catch (error) {
+            console.error("Payment Error:", error);
+            toast.error("Something went wrong", { description: "Could not initiate payment." });
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
         <div className="glass-card p-6 md:p-8 rounded-3xl border border-white/10 relative">
+            <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+
             {/* Header */}
             <div className="mb-6">
                 <h3 className="text-2xl md:text-3xl font-display font-bold text-white mb-2">
@@ -286,10 +360,17 @@ export function InlineRegistrationForm() {
                 <div className="pt-2">
                     <Button
                         type="submit"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || loading}
                         className="w-full h-12 md:h-14 text-base md:text-lg"
                     >
-                        {isSubmitting ? "Submitting..." : "Complete Registration"}
+                        {loading || isSubmitting ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            "Proceed to Payment"
+                        )}
                     </Button>
                 </div>
             </form>
