@@ -12,6 +12,7 @@
 
 # legacy files
 /legacy_cra
+/public/apttech_logo.png
 
 # testing
 /coverage

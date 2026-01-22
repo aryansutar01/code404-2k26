@@ -1,0 +1,11 @@
+Model Information:
+* title:	Eywa Tree
+* source:	https://sketchfab.com/3d-models/eywa-tree-3b3ad5248e37435e931e26dad3f5631d
+* author:	Matthew Ma (https://sketchfab.com/mmxttma)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Eywa Tree" (https://sketchfab.com/3d-models/eywa-tree-3b3ad5248e37435e931e26dad3f5631d) by Matthew Ma (https://sketchfab.com/mmxttma) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
