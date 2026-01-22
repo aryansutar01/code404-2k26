@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,8 +8,9 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import Script from 'next/script';
 
 /* -------------------- Validation Schema -------------------- */
 const registrationSchema = z.object({
@@ -38,11 +39,16 @@ interface RegistrationModalProps {
     preselectedEvent?: string;
 }
 
+declare global {
+    interface Window {
+        Razorpay: any;
+    }
+}
+
 export function RegistrationModal({ isOpen, onClose, preselectedEvent }: RegistrationModalProps) {
     const {
         register,
         handleSubmit,
-        control,
         watch,
         setValue,
         formState: { errors, isSubmitting },
@@ -53,6 +59,8 @@ export function RegistrationModal({ isOpen, onClose, preselectedEvent }: Registr
             eventName: preselectedEvent || "",
         }
     });
+
+    const [loading, setLoading] = useState(false);
 
     const selectedEvent = watch("eventName");
 
@@ -113,39 +121,110 @@ export function RegistrationModal({ isOpen, onClose, preselectedEvent }: Registr
         }
     };
 
-    /* -------------------- Save Registration -------------------- */
-    async function saveRegistration(data: any) {
+    const getEventPrice = (eventName: string) => {
+        switch (eventName) {
+            case "Avatar: The Algo War": return 99;
+            case "Neural Link": return 149;
+            case "The Voice of Eywa": return 59;
+            default: return 0;
+        }
+    };
+
+    /* -------------------- Submit & Payment Handler -------------------- */
+    async function onSubmit(data: any) {
+        setLoading(true);
         try {
-            const registrationData = {
-                ...data,
-                paymentStatus: 'pending',
-                createdAt: serverTimestamp(),
+            const price = getEventPrice(data.eventName);
+
+            if (price === 0) {
+                toast.error("Invalid event details found");
+                setLoading(false);
+                return;
+            }
+
+            // 1. Create Order
+            const response = await fetch('/api/razorpay', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: price,
+                    currency: 'INR',
+                    receipt: `receipt_${Date.now()}`
+                })
+            });
+
+            const order = await response.json();
+
+            if (!response.ok) {
+                console.error('Order creation failed:', order);
+                throw new Error(order.error || 'Failed to create order');
+            }
+
+            // 2. Initialize Razorpay
+            const options = {
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                amount: order.amount,
+                currency: order.currency,
+                name: "Code404 2k26",
+                description: `${data.eventName} Registration`,
+                order_id: order.id,
+                handler: async function (response: any) {
+                    try {
+                        const registrationData = {
+                            ...data,
+                            amount: price,
+                            paymentId: response.razorpay_payment_id,
+                            orderId: response.razorpay_order_id,
+                            signature: response.razorpay_signature,
+                            paymentStatus: 'success',
+                            createdAt: serverTimestamp(),
+                        };
+
+                        await addDoc(collection(db, "registrations"), registrationData);
+
+                        reset();
+                        toast.success("Registration Successful!", {
+                            description: "Payment verified. See you at the event!"
+                        });
+                        setTimeout(() => onClose(), 2000);
+
+                    } catch (error) {
+                        console.error("Firestore Error:", error);
+                        toast.error("Payment successful but registration failed", {
+                            description: "Please contact support with Payment ID: " + response.razorpay_payment_id
+                        });
+                    }
+                },
+                prefill: {
+                    name: data.name,
+                    email: data.email,
+                    contact: data.phone
+                },
+                theme: {
+                    color: "#00E5FF"
+                }
             };
 
-            await addDoc(collection(db, "registrations"), registrationData);
+            if (!window.Razorpay) {
+                throw new Error("Razorpay SDK not loaded");
+            }
 
-            reset();
-            toast.success("Registration Successful!", {
-                description: "We'll contact you for payment and event details via email."
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (response: any) {
+                toast.error("Payment Failed", {
+                    description: response.error.description
+                });
             });
+            rzp.open();
 
-            setTimeout(() => {
-                onClose();
-            }, 1500);
-
-            return true;
         } catch (error) {
-            console.error("Firestore Error:", error);
-            toast.error("Registration Failed", {
-                description: "Something went wrong. Please try again later."
+            console.error("Payment Error:", error);
+            toast.error("Something went wrong", {
+                description: "Could not initiate payment. Please try again."
             });
-            return false;
+        } finally {
+            setLoading(false);
         }
-    }
-
-    /* -------------------- Submit Handler -------------------- */
-    async function onSubmit(data: any) {
-        await saveRegistration(data);
     }
 
     if (!isOpen) return null;
@@ -155,9 +234,10 @@ export function RegistrationModal({ isOpen, onClose, preselectedEvent }: Registr
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
             onClick={onClose}
         >
+            <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -346,10 +426,17 @@ export function RegistrationModal({ isOpen, onClose, preselectedEvent }: Registr
                         </Button>
                         <Button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || loading}
                             className="flex-1"
                         >
-                            {isSubmitting ? "Submitting..." : "Register Now"}
+                            {loading || isSubmitting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Processing...
+                                </>
+                            ) : (
+                                "Proceed to Payment"
+                            )}
                         </Button>
                     </div>
                 </form>

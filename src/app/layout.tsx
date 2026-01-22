@@ -17,7 +17,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Code404 - Bioluminescent Futurism',
+  title: 'Code404',
   description: 'Experience the fusion of Nature and Technology. A premium tech event.',
   other: {
     'darkreader-lock': 'true',
