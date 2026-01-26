@@ -23,6 +23,8 @@ export function Navbar() {
         { name: 'Sponsors', href: '#sponsors' },
         { name: 'About', href: '#about' },
         { name: 'Events', href: '#events' },
+        { name: 'Rulebook', href: '#rulebook' },
+        { name: 'Register', href: '#register' },
     ];
 
     return (

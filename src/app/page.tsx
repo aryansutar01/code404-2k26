@@ -3,6 +3,7 @@ import { Hero } from '@/components/sections/Hero';
 import { Sponsors } from '@/components/sections/Sponsors';
 import { About } from '@/components/sections/About';
 import { Events } from '@/components/sections/Events';
+import { Rulebook } from '@/components/sections/Rulebook';
 import { RegisterCTA } from '@/components/sections/RegisterCTA';
 import { Footer } from '@/components/layout/Footer';
 
@@ -17,6 +18,8 @@ export default function Home() {
       <About />
 
       <Events />
+
+      <Rulebook />
 
       <RegisterCTA />
 
