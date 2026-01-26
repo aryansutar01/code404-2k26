@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone, Twitter, Globe } from 'lucide-react';
 
 const footerLinks = {
     event: [
@@ -12,21 +12,20 @@ const footerLinks = {
         { name: 'Register', href: '#register' },
     ],
     legal: [
-        { name: 'Privacy Policy', href: '#' },
-        { name: 'Terms & Conditions', href: '#' },
-        { name: 'Code of Conduct', href: '#' },
-        { name: 'Refund Policy', href: '#' },
+        { name: 'Privacy Policy', href: '/documents/Code404_RuleBook.pdf' },
+        { name: 'Terms & Conditions', href: '/documents/Code404_RuleBook.pdf' },
+        { name: 'Code of Conduct', href: '/documents/Code404_RuleBook.pdf' },
+        { name: 'Rulebook', href: '/documents/Code404_RuleBook.pdf' },
     ],
     contact: [
-        { icon: Mail, text: 'code404@example.com', href: 'mailto:code404@example.com' },
-        { icon: Phone, text: '+91 98765 43210', href: 'tel:+919876543210' },
-        { icon: MapPin, text: 'Your College, City, State', href: '#' },
+        { icon: Mail, text: 'oysterkode@ritindia.edu', href: 'mailto:oysterkode@ritindia.edu' },
+        { icon: Phone, text: '+91 88620 61585', href: 'tel:+918862061585' },
+        { icon: MapPin, text: 'RIT, Rajaramnagar, Ishwarpur, Walwa, Sangli 415414', href: 'https://maps.google.com/?q=RIT, Rajaramnagar, Ishwarpur, Walwa, Sangli 415414' },
     ],
     social: [
-        { icon: Instagram, href: '#', name: 'Instagram' },
-        { icon: Linkedin, href: '#', name: 'LinkedIn' },
-        { icon: Twitter, href: '#', name: 'Twitter' },
-        { icon: Facebook, href: '#', name: 'Facebook' },
+        { icon: Instagram, href: 'https://www.instagram.com/oyster_kode?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==', name: 'Instagram' },
+        { icon: Linkedin, href: 'https://www.linkedin.com/in/oyster-kode-club/', name: 'LinkedIn' },
+        { icon: Globe, href: 'https://www.oysterkodeclub.com', name: 'Website' },
     ]
 };
 
@@ -133,13 +132,8 @@ export function Footer() {
 
                 {/* Bottom Bar */}
                 <div className="py-6 border-t border-white/5">
-                    <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-soft-white/40">
+                    <div className="flex justify-center items-center text-sm text-soft-white/40">
                         <p>© 2026 CODE 404. All rights reserved.</p>
-                        <div className="flex items-center gap-2">
-                            <span>Made with</span>
-                            <span className="text-red-400 animate-pulse">♥</span>
-                            <span>by Oyster Kode Club</span>
-                        </div>
                     </div>
                 </div>
             </div>

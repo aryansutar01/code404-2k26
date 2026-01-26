@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import Script from 'next/script';
+import { RegistrationSuccessModal } from "./RegistrationSuccessModal";
+import { saveRegistration } from "@/services/registrationService";
 
 /* -------------------- Validation Schema -------------------- */
 const registrationSchema = z.object({
@@ -21,14 +23,45 @@ const registrationSchema = z.object({
     year: z.string().min(1, "Please select a year"),
     eventName: z.string().min(1, "Please select an event"),
     category: z.string().optional(),
-}).refine((data) => {
+    partnerName: z.string().optional(),
+    partnerEmail: z.string().optional(),
+    partnerPhone: z.string().optional(),
+}).superRefine((data, ctx) => {
+    // Category is required only if eventName is "Avatar: The Algo War"
     if (data.eventName === "Avatar: The Algo War") {
-        return data.category && data.category.length > 0;
+        if (!data.category || data.category.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Please select a category",
+                path: ["category"],
+            });
+        }
     }
-    return true;
-}, {
-    message: "Please select a category",
-    path: ["category"],
+
+    // Partner details required for "Neural Link"
+    if (data.eventName === "Neural Link") {
+        if (!data.partnerName || data.partnerName.length < 3) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Partner Name is required",
+                path: ["partnerName"],
+            });
+        }
+        if (!data.partnerEmail || !z.string().email().safeParse(data.partnerEmail).success) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Valid Partner Email is required",
+                path: ["partnerEmail"],
+            });
+        }
+        if (!data.partnerPhone || data.partnerPhone.length !== 10) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Partner Phone must be 10 digits",
+                path: ["partnerPhone"],
+            });
+        }
+    }
 });
 
 declare global {
@@ -49,13 +82,22 @@ export function InlineRegistrationForm() {
         resolver: zodResolver(registrationSchema),
     });
 
+
+
     const [loading, setLoading] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [successEvent, setSuccessEvent] = useState("");
 
     const selectedEvent = watch("eventName");
 
     useEffect(() => {
         if (selectedEvent !== "Avatar: The Algo War") {
             setValue("category", "");
+        }
+        if (selectedEvent !== "Neural Link") {
+            setValue("partnerName", "");
+            setValue("partnerEmail", "");
+            setValue("partnerPhone", "");
         }
     }, [selectedEvent, setValue]);
 
@@ -128,7 +170,11 @@ export function InlineRegistrationForm() {
                 body: JSON.stringify({
                     amount: price,
                     currency: 'INR',
-                    receipt: `receipt_${Date.now()}`
+                    receipt: `receipt_${Date.now()}`,
+                    notes: {
+                        eventName: data.eventName,
+                        prn: data.prn
+                    }
                 })
             });
 
@@ -147,20 +193,17 @@ export function InlineRegistrationForm() {
                 order_id: order.id,
                 handler: async function (response: any) {
                     try {
-                        await addDoc(collection(db, "registrations"), {
+                        await saveRegistration({
                             ...data,
                             amount: price,
                             paymentId: response.razorpay_payment_id,
                             orderId: response.razorpay_order_id,
                             signature: response.razorpay_signature,
-                            paymentStatus: 'success',
-                            createdAt: serverTimestamp(),
                         });
 
                         reset();
-                        toast.success("Registration Successful!", {
-                            description: "Payment verified. See you at the event!"
-                        });
+                        setSuccessEvent(data.eventName);
+                        setShowSuccess(true);
 
                     } catch (error) {
                         console.error("Firestore Error:", error);
@@ -193,9 +236,17 @@ export function InlineRegistrationForm() {
         }
     }
 
+
     return (
         <div className="glass-card p-6 md:p-8 rounded-3xl border border-white/10 relative">
             <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+
+            {showSuccess && (
+                <RegistrationSuccessModal
+                    eventName={successEvent}
+                    onClose={() => setShowSuccess(false)}
+                />
+            )}
 
             {/* Header */}
             <div className="mb-6">
@@ -339,6 +390,63 @@ export function InlineRegistrationForm() {
                             ))}
                         </select>
                         {errors.category && <span className="text-red-400 text-xs mt-1 block">{errors.category.message}</span>}
+                    </div>
+                )}
+
+                {/* Partner Details (Neural Link) */}
+                {selectedEvent === "Neural Link" && (
+                    <div className="space-y-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                        <h3 className="text-base md:text-lg font-bold text-white mb-2">Partner Details</h3>
+
+                        {/* Partner Name */}
+                        <div>
+                            <label htmlFor="partnerName" className="block text-xs md:text-sm font-medium text-soft-white/80 mb-1.5">
+                                Partner Name *
+                            </label>
+                            <input
+                                id="partnerName"
+                                {...register("partnerName")}
+                                className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm md:text-base placeholder:text-soft-white/30 focus:outline-none focus:border-deep-cyan/50 focus:ring-2 focus:ring-deep-cyan/20 transition-all"
+                                placeholder="Partner's Full Name"
+                            />
+                            {errors.partnerName && <span className="text-red-400 text-xs mt-1 block">{errors.partnerName.message}</span>}
+                        </div>
+
+                        {/* Partner Email */}
+                        <div>
+                            <label htmlFor="partnerEmail" className="block text-xs md:text-sm font-medium text-soft-white/80 mb-1.5">
+                                Partner Email *
+                            </label>
+                            <input
+                                id="partnerEmail"
+                                type="email"
+                                {...register("partnerEmail")}
+                                className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm md:text-base placeholder:text-soft-white/30 focus:outline-none focus:border-deep-cyan/50 focus:ring-2 focus:ring-deep-cyan/20 transition-all"
+                                placeholder="partner@example.com"
+                            />
+                            {errors.partnerEmail && <span className="text-red-400 text-xs mt-1 block">{errors.partnerEmail.message}</span>}
+                        </div>
+
+                        {/* Partner Phone */}
+                        <div>
+                            <label htmlFor="partnerPhone" className="block text-xs md:text-sm font-medium text-soft-white/80 mb-1.5">
+                                Partner Phone Number *
+                            </label>
+                            <div className="relative">
+                                <span className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-soft-white/50 text-xs md:text-sm pointer-events-none">
+                                    🇮🇳 +91
+                                </span>
+                                <input
+                                    id="partnerPhone"
+                                    type="tel"
+                                    inputMode="numeric"
+                                    {...register("partnerPhone")}
+                                    className="w-full pl-16 md:pl-20 pr-3 md:pr-4 py-2.5 md:py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm md:text-base placeholder:text-soft-white/30 focus:outline-none focus:border-deep-cyan/50 focus:ring-2 focus:ring-deep-cyan/20 transition-all"
+                                    placeholder="98765 43210"
+                                />
+                            </div>
+                            {errors.partnerPhone && <span className="text-red-400 text-xs mt-1 block">{errors.partnerPhone.message}</span>}
+                        </div>
                     </div>
                 )}
 

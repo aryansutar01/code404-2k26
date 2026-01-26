@@ -47,8 +47,8 @@ const reasons = [
 const stats = [
     { number: "200+", label: "Participants" },
     { number: "3", label: "Events" },
-    { number: "₹10K+", label: "Worth Prizes" },
-    { number: "1", label: "Day of Excellence" }
+    { number: "₹15K+", label: "Worth Prizes" },
+    { number: "2", label: "Days of Excellence" }
 ];
 
 export function About() {

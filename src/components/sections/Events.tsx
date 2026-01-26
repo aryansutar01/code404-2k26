@@ -6,6 +6,7 @@ import { Code2, Users, Mic, Clock, IndianRupee, TrendingUp } from 'lucide-react'
 import { useState } from 'react';
 import { RegistrationModal } from '@/components/forms/RegistrationModal';
 import Image from 'next/image';
+import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 
 const events = [
     {
@@ -164,6 +165,7 @@ function EventCard({ event, index }: { event: typeof events[0], index: number })
 function EventModal({ event, onClose }: { event: typeof events[0], onClose: () => void }) {
     const Icon = event.icon;
     const [showRegister, setShowRegister] = useState(false);
+    useBodyScrollLock(true);
 
     return (
         <>

@@ -152,29 +152,7 @@ export function Sponsors() {
                     </motion.div>
                 )}
 
-                {/* Become a Sponsor CTA */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.2 }}
-                    className="mt-20 text-center"
-                >
-                    <div className="glass-card p-8 md:p-12 rounded-3xl border border-deep-cyan/20 max-w-3xl mx-auto bg-gradient-to-b from-white/5 to-transparent">
-                        <h3 className="text-2xl md:text-3xl font-display font-bold text-white mb-4">
-                            Join the Innovation
-                        </h3>
-                        <p className="text-soft-white/60 mb-8 max-w-xl mx-auto text-lg">
-                            Partner with Code404 to shape the next generation of tech leaders.
-                        </p>
-                        <a
-                            href="mailto:sponsor@code404.com"
-                            className="inline-flex items-center justify-center px-8 py-4 rounded-full bg-gradient-to-r from-deep-cyan to-electric-teal text-midnight-blue font-bold text-lg hover:shadow-[0_0_30px_rgba(0,255,198,0.6)] hover:scale-105 transition-all duration-300"
-                        >
-                            Become a Sponsor
-                        </a>
-                    </div>
-                </motion.div>
+
             </div>
         </section>
     );

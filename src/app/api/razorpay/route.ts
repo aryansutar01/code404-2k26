@@ -8,12 +8,13 @@ const razorpay = new Razorpay({
 
 export async function POST(request: Request) {
     try {
-        const { amount, currency = 'INR', receipt } = await request.json();
+        const { amount, currency = 'INR', receipt, notes } = await request.json();
 
         const options = {
             amount: amount * 100, // amount in paisa
             currency,
             receipt,
+            notes, // Pass event details here
         };
 
         const order = await razorpay.orders.create(options);
