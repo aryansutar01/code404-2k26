@@ -2,11 +2,12 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Code2, Users, Mic, Clock, IndianRupee, TrendingUp } from 'lucide-react';
-import { useState } from 'react';
+import { Code2, Users, Mic, Clock, IndianRupee, TrendingUp, AlertTriangle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { RegistrationModal } from '@/components/forms/RegistrationModal';
 import Image from 'next/image';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
+import { fetchEventStats } from '@/utils/stats';
 
 const events = [
     {
@@ -21,7 +22,7 @@ const events = [
         glowColor: 'shadow-[0_0_20px_rgba(0,229,255,0.2)]',
         time: '11:30 AM – 4:00 PM',
         level: 'Novice + Expert',
-        participants: '200',
+        participants: 'Open for All', // Updated
         fee: '₹99',
         rounds: [
             { title: 'Aptitude Test', desc: 'Test your logical reasoning, problem-solving ability, and technical fundamentals.' },
@@ -41,7 +42,7 @@ const events = [
         glowColor: 'shadow-[0_0_20px_rgba(0,255,198,0.2)]',
         time: '11:00 AM – 2:00 PM',
         level: 'Teams of 2',
-        participants: '50 Teams',
+        participants: 'Limited: 50 Entries Only', // Updated
         fee: '₹149/team',
         badge: 'Best for teams that think alike, code apart.',
         requirement: '⚠ Laptop compulsory',
@@ -62,7 +63,7 @@ const events = [
         glowColor: 'shadow-[0_0_20px_rgba(77,255,210,0.2)]',
         time: '10:00 AM – 2:30 PM',
         level: '10 per group',
-        participants: '250',
+        participants: 'Open for All', // Updated
         fee: '₹59',
         rounds: [
             { title: 'GD – Level 1', desc: 'Initial screening based on clarity and participation.' },
@@ -165,7 +166,21 @@ function EventCard({ event, index }: { event: typeof events[0], index: number })
 function EventModal({ event, onClose }: { event: typeof events[0], onClose: () => void }) {
     const Icon = event.icon;
     const [showRegister, setShowRegister] = useState(false);
+    const [isSoldOut, setIsSoldOut] = useState(false);
     useBodyScrollLock(true);
+
+    useEffect(() => {
+        const checkAvailability = async () => {
+            // Only check limit for Neural Link
+            if (event.id === 'neural-link') {
+                const stats = await fetchEventStats();
+                if (stats && stats.neural_link && stats.neural_link.count >= 50) {
+                    setIsSoldOut(true);
+                }
+            }
+        };
+        checkAvailability();
+    }, [event.id]);
 
     return (
         <>
@@ -271,12 +286,25 @@ function EventModal({ event, onClose }: { event: typeof events[0], onClose: () =
                                 Close
                             </Button>
                             <Button
-                                className="flex-1 bg-gradient-to-r from-deep-cyan to-electric-teal text-midnight-blue hover:shadow-[0_0_20px_rgba(0,255,198,0.4)]"
-                                onClick={() => setShowRegister(true)}
+                                className={`flex-1 ${isSoldOut
+                                    ? 'bg-white/5 text-soft-white/40 cursor-not-allowed border-none shadow-none hover:bg-white/5'
+                                    : 'bg-gradient-to-r from-deep-cyan to-electric-teal text-midnight-blue hover:shadow-[0_0_20px_rgba(0,255,198,0.4)]'}`}
+                                onClick={() => !isSoldOut && setShowRegister(true)}
+                                disabled={isSoldOut}
                             >
-                                Register Now
+                                {isSoldOut ? "Entries Full" : "Register Now"}
                             </Button>
                         </div>
+
+                        {isSoldOut && (
+                            <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-white/5 to-transparent border-l-4 border-deep-cyan">
+                                <p className="text-soft-white/80 text-sm">
+                                    <span className="text-deep-cyan font-bold block mb-1">Registration Closed for {event.title}</span>
+                                    Due to overwhelming demand, entries for this event are currently full.
+                                    However, <span className="text-white font-medium">Avatar: The Algo War</span> and <span className="text-white font-medium">The Voice of Eywa</span> are still accepting challengers. Don't miss your chance to shine there!
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Right Column: Image (Sticky on Desktop, Top on Mobile) */}

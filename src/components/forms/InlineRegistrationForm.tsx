@@ -136,27 +136,21 @@ export function InlineRegistrationForm() {
     ];
 
     const getEventFee = (eventName: string) => {
-        return "₹1 (TEST MODE)";
-        /*
         switch (eventName) {
             case "Avatar: The Algo War": return "₹99";
             case "Neural Link": return "₹149";
             case "The Voice of Eywa": return "₹59";
             default: return "";
         }
-        */
     };
 
     const getEventPrice = (eventName: string) => {
-        return 1; // TEST MODE
-        /*
         switch (eventName) {
             case "Avatar: The Algo War": return 99;
             case "Neural Link": return 149;
             case "The Voice of Eywa": return 59;
             default: return 0;
         }
-        */
     };
 
     async function onSubmit(data: any) {
