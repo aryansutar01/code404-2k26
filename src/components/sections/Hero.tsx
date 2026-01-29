@@ -86,6 +86,7 @@ export function Hero() {
                             size="lg"
                             variant="glass"
                             className="min-w-[180px] h-14 rounded-full border border-white/20 hover:border-deep-cyan/60 hover:bg-white/5 transition-all text-soft-white backdrop-blur-md shadow-lg hover:shadow-[0_0_25px_rgba(0,229,255,0.3)]"
+                            onClick={() => window.open("https://www.instagram.com/reels/DT1n9dVkSi4/", "_blank")}
                         >
                             <Play className="mr-2 w-5 h-5 fill-current" /> Watch Teaser
                         </Button>
