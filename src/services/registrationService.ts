@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { doc, runTransaction, serverTimestamp, collection } from "firebase/firestore";
+import { doc, collection, serverTimestamp, increment, writeBatch } from "firebase/firestore";
 
 // Helper to get collection name based on event
 export const getEventCollectionName = (eventName: string) => {
@@ -42,6 +42,7 @@ export interface RegistrationData {
 
 /**
  * Saves registration data to the specific event collection and updates global stats atomically.
+ * Uses writeBatch and increment logic to avoid transaction contention on the stats document.
  */
 export async function saveRegistration(minData: RegistrationData) {
     const eventCollection = getEventCollectionName(minData.eventName);
@@ -55,53 +56,37 @@ export async function saveRegistration(minData: RegistrationData) {
     };
 
     try {
-        await runTransaction(db, async (transaction) => {
-            // 1. Create a reference for the new registration document
-            const newRegRef = doc(collection(db, eventCollection));
+        const batch = writeBatch(db);
 
-            // 2. Create a reference for the stats document
-            const statsRef = doc(db, "event_stats", "marketing_overview");
-            const statsDoc = await transaction.get(statsRef);
+        // 1. Create a reference for the new registration document
+        const newRegRef = doc(collection(db, eventCollection));
+        batch.set(newRegRef, data);
 
-            // 3. Initialize stats if they don't exist
-            let currentStats = statsDoc.exists() ? statsDoc.data() : {
-                total_revenue: 0,
-                total_registrations: 0,
-                algo_war: { revenue: 0, count: 0 },
-                neural_link: { revenue: 0, count: 0 },
-                voice_of_eywa: { revenue: 0, count: 0 },
-                others: { revenue: 0, count: 0 }
-            };
+        // 2. Update stats using increment (atomic, no read-lock needed)
+        const statsRef = doc(db, "event_stats", "marketing_overview");
 
-            // 4. Update Stats Logic
-            const newRevenue = (currentStats.total_revenue || 0) + data.amount;
-            const newCount = (currentStats.total_registrations || 0) + 1;
+        // Use dot notation for nested updates to ensure we don't overwrite other fields
+        // and handle atomic increments efficiently
+        const statsUpdate: any = {
+            total_revenue: increment(data.amount),
+            total_registrations: increment(1),
+            last_updated: serverTimestamp()
+        };
 
-            const eventStats = currentStats[eventKey] || { revenue: 0, count: 0 };
-            const newEventRevenue = (eventStats.revenue || 0) + data.amount;
-            const newEventCount = (eventStats.count || 0) + 1;
+        // Add nested updates dynamically
+        statsUpdate[`${eventKey}.revenue`] = increment(data.amount);
+        statsUpdate[`${eventKey}.count`] = increment(1);
 
-            // 5. Writes
-            // Save the registration
-            transaction.set(newRegRef, data);
+        // Use set with merge: true to handle case where stats doc might not exist yet
+        // or to merge with existing data without overwriting
+        batch.set(statsRef, statsUpdate, { merge: true });
 
-            // Update the stats
-            transaction.set(statsRef, {
-                ...currentStats,
-                total_revenue: newRevenue,
-                total_registrations: newCount,
-                [eventKey]: {
-                    revenue: newEventRevenue,
-                    count: newEventCount
-                },
-                last_updated: serverTimestamp()
-            }, { merge: true });
-        });
+        await batch.commit();
 
         console.log(`Registration saved to ${eventCollection} and stats updated.`);
         return true;
     } catch (error) {
-        console.error("Transaction failed: ", error);
+        console.error("Batch write failed: ", error);
         throw error;
     }
 }
