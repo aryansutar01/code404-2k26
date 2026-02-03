@@ -1,6 +1,7 @@
 'use client';
 
 import { useForm } from "react-hook-form";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -129,6 +130,18 @@ export function InlineRegistrationForm() {
         { value: "Neural Link", label: "Neural Link - ₹149/team" },
         { value: "The Voice of Eywa", label: "The Voice of Eywa - ₹59" },
     ];
+
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const eventParam = searchParams.get('event');
+        if (eventParam) {
+            const isValid = eventOptions.some(e => e.value === eventParam);
+            if (isValid) {
+                setValue('eventName', eventParam);
+            }
+        }
+    }, [searchParams, setValue]);
 
     const categoryOptions = [
         { value: "NOVICE", label: "Novice" },

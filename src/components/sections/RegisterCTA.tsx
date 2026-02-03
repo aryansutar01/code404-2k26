@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, Sparkles, Zap } from 'lucide-react';
 import { InlineRegistrationForm } from '@/components/forms/InlineRegistrationForm';
+import { Suspense } from 'react';
 
 import Image from 'next/image';
 
@@ -171,7 +172,9 @@ export function RegisterCTA() {
 
                         {/* Right: Registration Form */}
                         <div>
-                            <InlineRegistrationForm />
+                            <Suspense fallback={<div className="glass-card p-6 h-[400px] flex items-center justify-center text-soft-white/60">Loading Registration Form...</div>}>
+                                <InlineRegistrationForm />
+                            </Suspense>
                         </div>
                     </motion.div>
                 </div>

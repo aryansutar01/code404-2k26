@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Code2, Users, Mic, Clock, IndianRupee, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { RegistrationModal } from '@/components/forms/RegistrationModal';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useBodyScrollLock } from '@/hooks/useBodyScrollLock';
 import { fetchEventStats } from '@/utils/stats';
@@ -165,9 +165,15 @@ function EventCard({ event, index }: { event: typeof events[0], index: number })
 
 function EventModal({ event, onClose }: { event: typeof events[0], onClose: () => void }) {
     const Icon = event.icon;
-    const [showRegister, setShowRegister] = useState(false);
+    const router = useRouter();
     const [isSoldOut, setIsSoldOut] = useState(false);
     useBodyScrollLock(true);
+
+    const handleRegister = () => {
+        if (isSoldOut) return;
+        onClose();
+        router.push(`/?event=${encodeURIComponent(event.title)}#register`);
+    };
 
     useEffect(() => {
         const checkAvailability = async () => {
@@ -289,7 +295,7 @@ function EventModal({ event, onClose }: { event: typeof events[0], onClose: () =
                                 className={`flex-1 ${isSoldOut
                                     ? 'bg-white/5 text-soft-white/40 cursor-not-allowed border-none shadow-none hover:bg-white/5'
                                     : 'bg-gradient-to-r from-deep-cyan to-electric-teal text-midnight-blue hover:shadow-[0_0_20px_rgba(0,255,198,0.4)]'}`}
-                                onClick={() => !isSoldOut && setShowRegister(true)}
+                                onClick={handleRegister}
                                 disabled={isSoldOut}
                             >
                                 {isSoldOut ? "Entries Full" : "Register Now"}
@@ -323,13 +329,6 @@ function EventModal({ event, onClose }: { event: typeof events[0], onClose: () =
                     </div>
                 </motion.div>
             </motion.div>
-
-            {/* Registration Modal */}
-            <RegistrationModal
-                isOpen={showRegister}
-                onClose={() => setShowRegister(false)}
-                preselectedEvent={event.title}
-            />
         </>
     );
 }
