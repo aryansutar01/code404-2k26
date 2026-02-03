@@ -5,8 +5,7 @@ import { motion } from "framer-motion";
 import { Play } from "lucide-react";
 import { StarField } from "@/components/ui/star-field";
 import dynamic from 'next/dynamic';
-import { useState } from "react";
-import { RegistrationModal } from "@/components/forms/RegistrationModal";
+import { useRouter } from "next/navigation";
 
 const BioTree = dynamic(() => import('@/components/three/BioTree'), {
     ssr: false,
@@ -14,7 +13,7 @@ const BioTree = dynamic(() => import('@/components/three/BioTree'), {
 });
 
 export function Hero() {
-    const [showRegister, setShowRegister] = useState(false);
+    const router = useRouter();
 
     return (
         <>
@@ -93,7 +92,7 @@ export function Hero() {
                         <Button
                             size="lg"
                             className="min-w-[180px] h-14 rounded-full bg-gradient-to-r from-deep-cyan to-electric-teal text-midnight-blue hover:shadow-[0_0_35px_rgba(0,255,198,0.7)] font-bold tracking-wide transition-all duration-300"
-                            onClick={() => setShowRegister(true)}
+                            onClick={() => router.push('#register')}
                         >
                             REGISTER NOW
                         </Button>
@@ -111,11 +110,6 @@ export function Hero() {
                 </motion.div>
             </section>
 
-            {/* Registration Modal */}
-            <RegistrationModal
-                isOpen={showRegister}
-                onClose={() => setShowRegister(false)}
-            />
         </>
     )
 }
