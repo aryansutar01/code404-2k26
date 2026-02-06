@@ -129,6 +129,7 @@ export function RegistrationModal({ isOpen, onClose, preselectedEvent }: Registr
         { value: "CIVIL", label: "Civil Engineering" },
         { value: "AIML", label: "AI and Machine Learning" },
         { value: "ROBOTICS", label: "Robotics" },
+        { value: "Electrical", label: "Electrical" },
         { value: "BSC", label: "Bachelor of Science" },
         { value: "BCS", label: "Bachelor of CS" },
         { value: "BCA", label: "BCA" },
