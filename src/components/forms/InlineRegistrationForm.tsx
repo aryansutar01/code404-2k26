@@ -106,6 +106,7 @@ export function InlineRegistrationForm() {
         { value: "CSE", label: "Computer Science Engineering" },
         { value: "CSIT", label: "CS and IT" },
         { value: "MECH", label: "Mechanical Engineering" },
+        { value: "ELEC", label: "Electrical Engineering" },
         { value: "METR", label: "Mechatronics" },
         { value: "ENTC", label: "Electronics and Telecom" },
         { value: "CIVIL", label: "Civil Engineering" },
