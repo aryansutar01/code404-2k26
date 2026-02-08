@@ -6,6 +6,7 @@ import { Play } from "lucide-react";
 import { StarField } from "@/components/ui/star-field";
 import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
+import { CountdownTimer } from "@/components/ui/CountdownTimer";
 
 const BioTree = dynamic(() => import('@/components/three/BioTree'), {
     ssr: false,
@@ -69,10 +70,20 @@ export function Hero() {
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1, delay: 0.8 }}
-                        className="text-sm md:text-xl font-light tracking-[0.5em] text-soft-white/70 uppercase mb-16 drop-shadow-[0_0_10px_rgba(0,229,255,0.3)]"
+                        className="text-sm md:text-xl font-light tracking-[0.5em] text-soft-white/70 uppercase mb-10 drop-shadow-[0_0_10px_rgba(0,229,255,0.3)]"
                     >
                         Code to Change
                     </motion.p>
+
+                    {/* Countdown Timer */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 1, delay: 0.9 }}
+                        className="mb-12 md:mb-16"
+                    >
+                        <CountdownTimer targetDate={new Date('2026-02-10T10:00:00+05:30')} />
+                    </motion.div>
 
                     {/* CTA Buttons */}
                     <motion.div
