@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { doc, collection, serverTimestamp, increment, writeBatch } from "firebase/firestore";
+import { doc, collection, serverTimestamp, increment, writeBatch, addDoc } from "firebase/firestore";
 
 // Helper to get collection name based on event
 export const getEventCollectionName = (eventName: string) => {
@@ -87,6 +87,31 @@ export async function saveRegistration(minData: RegistrationData) {
         return true;
     } catch (error) {
         console.error("Batch write failed: ", error);
+        throw error;
+    }
+}
+
+/**
+ * Saves re-registration data to a dedicated "re_registrations" collection.
+ * This does NOT update the main event stats or mix with paid registrations.
+ */
+export async function saveReRegistration(data: any) {
+    const collectionName = "re_registrations";
+
+    // Prepare the document data with timestamp
+    const regData = {
+        ...data,
+        paymentStatus: 'skipped', // Explicitly mark as skipped/free
+        reRegistration: true,
+        createdAt: serverTimestamp(),
+    };
+
+    try {
+        const docRef = await addDoc(collection(db, collectionName), regData);
+        console.log(`Re-registration saved to ${collectionName} with ID: ${docRef.id}`);
+        return docRef.id;
+    } catch (error) {
+        console.error("Error saving re-registration: ", error);
         throw error;
     }
 }

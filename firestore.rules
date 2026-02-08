@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // --- Existing Collections (Ensure these match your current console rules) ---
+    // match /registrations_algo_war/{document=**} { allow read, write: if true; }
+    // match /registrations_neural_link/{document=**} { allow read, write: if true; }
+    // match /registrations_voice_of_eywa/{document=**} { allow read, write: if true; }
+    // match /registrations_others/{document=**} { allow read, write: if true; }
+    // match /event_stats/{document=**} { allow read, write: if true; }
+
+    // --- NEW RULE FOR RE-REGISTRATIONS ---
+    // Allow public read and write access to the re_registrations collection
+    match /re_registrations/{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Default deny all other access (Best Practice)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
