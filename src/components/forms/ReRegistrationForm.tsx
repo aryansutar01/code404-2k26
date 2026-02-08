@@ -14,6 +14,7 @@ import { saveReRegistration } from "@/services/registrationService";
 const registrationSchema = z.object({
     name: z.string().min(3, "Name must be at least 3 characters"),
     prn: z.string().min(1, "PRN is required"),
+    transactionId: z.string().min(1, "Transaction ID is required"),
     email: z.string().email("Invalid email address"),
     phone: z.string().length(10, "Phone number must be exactly 10 digits"),
     department: z.string().min(1, "Please select a department"),
@@ -381,6 +382,20 @@ export function ReRegistrationForm() {
                         placeholder="Enter your college PRN"
                     />
                     {errors.prn && <span className="text-red-400 text-xs mt-1 block">{errors.prn.message}</span>}
+                </div>
+
+                {/* Transaction ID */}
+                <div>
+                    <label htmlFor="transactionId" className="block text-xs md:text-sm font-medium text-soft-white/80 mb-1.5">
+                        Transaction ID *
+                    </label>
+                    <input
+                        id="transactionId"
+                        {...register("transactionId")}
+                        className="w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm md:text-base placeholder:text-soft-white/30 focus:outline-none focus:border-deep-cyan/50 focus:ring-2 focus:ring-deep-cyan/20 transition-all"
+                        placeholder="Enter payment transaction ID"
+                    />
+                    {errors.transactionId && <span className="text-red-400 text-xs mt-1 block">{errors.transactionId.message}</span>}
                 </div>
 
                 {/* Submit */}
